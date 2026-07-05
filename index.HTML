@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#2f80ed"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <link rel="manifest" href="data:application/json,{}"/>
+  <title>درخت دانش PWA</title>
+  
+  <style>
+    :root {
+      --bg0: #f5f7fb; --bg1: #eef2ff;
+      --stroke: rgba(16,24,40,.12); --stroke2: rgba(16,24,40,.18);
+      --text: #0f172a; --muted: rgba(15,23,42,.62);
+      --primary: #2f80ed; --danger: #e74c3c; --success: #27ae60; --warning: #f39c12;
+      --radius: 14px; --shadow2: 0 10px 30px rgba(17,24,39,.08);
+      --topbar-height: 80px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Vazir", "Tahoma", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      background: radial-gradient(1000px 560px at 10% -10%, rgba(47,128,237,.18), transparent 55%), linear-gradient(180deg, var(--bg0), var(--bg1));
+      color: var(--text); padding: 18px; direction: rtl;
+      padding-top: calc(var(--topbar-height) + 20px);
+    }
+    
+    /* ===== نوار ابزار ثابت ===== */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      margin-bottom: 14px;
+      backdrop-filter: blur(12px);
+      position: fixed;
+      top: 10px;
+      left: 18px;
+      right: 18px;
+      z-index: 100;
+      max-width: calc(1200px - 36px);
+      margin-left: auto;
+      margin-right: auto;
+      min-height: var(--topbar-height);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 240px; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 12px;
+      background: radial-gradient(circle at 30% 30%, rgba(47,128,237,.95), rgba(47,128,237,.18));
+      border: 1px solid rgba(47,128,237,.35);
+      display: grid; place-items: center;
+      box-shadow: 0 10px 30px rgba(47,128,237,.22);
+      font-weight: 900;
+    }
+    .brand h1 { margin: 0; font-size: 14px; letter-spacing: .2px; line-height: 1.2; }
+    .brand p { margin: 2px 0 0; font-size: 11px; color: var(--muted); display: none; }
+    .brand p.show { display: block; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .toolbar .btn { font-size: 12px; padding: 7px 10px; }
+    
+    /* ===== دکمه شناور بازگشت به بالا ===== */
+    #scrollToTopBtn {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #6c63ff);
+      color: #fff;
+      border: none;
+      box-shadow: 0 8px 25px rgba(47,128,237,.35);
+      cursor: pointer;
+      font-size: 22px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99;
+      transition: all .3s ease;
+      font-weight: 900;
+    }
+    #scrollToTopBtn:hover {
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 12px 35px rgba(47,128,237,.45);
+    }
+    #scrollToTopBtn:active {
+      transform: scale(.95);
+    }
+    
+    /* ===== بقیه استایل‌ها ===== */
+    .app-container { max-width: 1200px; margin: 0 auto; }
+    .btn {
+      border: 1px solid var(--stroke2);
+      background: rgba(255,255,255,.74);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select: none;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(17,24,39,.06);
+    }
+    .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,.95); border-color: rgba(16,24,40,.24); }
+    .btn-primary { background: linear-gradient(180deg, rgba(47,128,237,.15), rgba(47,128,237,.08)); border-color: rgba(47,128,237,.45); }
+    .btn-success { background: linear-gradient(180deg, rgba(39,174,96,.15), rgba(39,174,96,.08)); border-color: rgba(39,174,96,.45); }
+    .btn-warning { background: linear-gradient(180deg, rgba(243,156,18,.15), rgba(243,156,18,.08)); border-color: rgba(243,156,18,.45); }
+    .content-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .tabs-wrap {
+      padding: 12px 14px;
+      background: rgba(255,255,255,.62);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(8px);
+    }
+    .tabs-bar { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; align-items: center; }
+    .tab {
+      flex: 0 0 auto;
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(16,24,40,.12);
+      background: rgba(255,255,255,.70);
+      cursor: pointer;
+      user-select: none;
+      max-width: 260px;
+      transition: background .12s ease;
+    }
+    .tab.active {
+      background: linear-gradient(180deg, rgba(47,128,237,.18), rgba(47,128,237,.06));
+      border-color: rgba(47,128,237,.45);
+      font-weight: 700;
+    }
+    .tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+    .tab-rename { font-size: 12px; border: none; background: transparent; cursor: pointer; padding: 0 4px; color: var(--muted); border-radius: 8px; }
+    .tab-rename:hover { color: var(--primary); background: rgba(47,128,237,.08); }
+    .tab-x { font-weight: 900; opacity: .9; padding: 1px 6px; border-radius: 10px; border: 1px solid rgba(16,24,40,.14); background: rgba(0,0,0,.06); cursor: pointer; }
+    
+    .tree-container {
+      background: rgba(255,255,255,.62);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(8px);
+      padding: 14px;
+      min-height: 420px;
+    }
+    .tree-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    .hint { color: var(--muted); font-size: 12px; }
+    .search-box { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--stroke); background: rgba(255,255,255,.8); font-size: 13px; outline: none; margin-bottom: 12px; font-family: inherit; }
+    .search-box:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(47,128,237,.15); }
+    
+    .root-btn {
+      border: 1px solid rgba(47,128,237,.45);
+      background: rgba(47,128,237,.12);
+      padding: 10px 13px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform .12s ease;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 18px rgba(47,128,237,.12);
+      color: var(--text);
+    }
+    .root-btn:hover { transform: translateY(-1px); }
+
+    .node { margin: 10px 0; padding-right: 14px; position: relative; }
+    .node::after {
+      content: "";
+      position: absolute; right: 0; top: 24px; bottom: -18px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(47,128,237,.30), rgba(47,128,237,.06));
+      border-radius: 999px;
+      opacity: .7;
+      pointer-events: none;
+    }
+    .node-content {
+      margin-right: 2px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(16,24,40,.12);
+      transition: border-color .12s ease, background .12s ease;
+    }
+    .node-content:hover { border-color: rgba(47,128,237,.40); }
+    .node-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .left-part { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; flex-wrap: wrap; }
+    .toggle {
+      width: 22px; height: 22px; flex-shrink: 0;
+      display: grid; place-items: center;
+      border-radius: 10px;
+      border: 1px solid rgba(16,24,40,.14);
+      background: rgba(0,0,0,.04);
+      cursor: pointer;
+      user-select: none;
+      margin-top: 2px;
+      font-weight: 900;
+    }
+    .node-text {
+      flex: 1; min-width: 0;
+      outline: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "Vazir", "Tahoma", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px; line-height: 1.55;
+      min-height: 20px;
+      text-align: right;
+      direction: rtl;
+    }
+    .node-text img { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start; }
+    .icon-btn {
+      padding: 7px 9px;
+      border-radius: 12px;
+      border: 1px solid rgba(16,24,40,.14);
+      background: rgba(255,255,255,.70);
+      cursor: pointer;
+      font-size: 12px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      white-space: nowrap;
+    }
+    .icon-btn:hover { transform: translateY(-1px); background: rgba(255,255,255,.95); border-color: rgba(16,24,40,.22); }
+    .icon-btn.primary { border-color: rgba(47,128,237,.45); background: rgba(47,128,237,.12); }
+    .icon-btn.success { border-color: rgba(39,174,96,.45); background: rgba(39,174,96,.10); }
+    .icon-btn.danger { border-color: rgba(231,76,60,.45); background: rgba(231,76,60,.10); }
+    .icon-btn.warning { border-color: rgba(243,156,18,.45); background: rgba(243,156,18,.10); }
+
+    .node.collapsed > .children-container { display: none; }
+    .children-container { transition: all 0.15s ease; }
+
+    .color-picker { width: 24px; height: 24px; border-radius: 8px; border: 1px solid var(--stroke); cursor: pointer; padding: 0; background: white; }
+    .font-select { padding: 4px 6px; border-radius: 8px; border: 1px solid var(--stroke); background: white; font-size: 11px; max-width: 90px; }
+    .size-input { width: 42px; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--stroke); text-align: center; font-size: 11px; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.35); z-index: 999; }
+    #imageControlModal, #statsModal, #mergeModal {
+      display: none; position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      background: rgba(255,255,255,.97);
+      border: 1px solid rgba(16,24,40,.16);
+      color: var(--text);
+      padding: 18px; border-radius: 16px;
+      z-index: 1000; box-shadow: 0 20px 70px rgba(0,0,0,.18);
+      min-width: 320px; max-width: 90vw;
+      max-height: 80vh; overflow-y: auto;
+      backdrop-filter: blur(10px);
+      text-align: right;
+    }
+    .modal-actions { margin-top: 14px; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+    
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-card {
+      background: rgba(255,255,255,.8);
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-card .num { font-size: 28px; font-weight: 900; color: var(--primary); }
+    .stat-card .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(16,24,40,.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #6c63ff);
+      border-radius: 999px;
+      transition: width .3s ease;
+      width: 0%;
+    }
+    
+    .tags-container { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+    .tag {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      background: rgba(47,128,237,.12);
+      border: 1px solid rgba(47,128,237,.25);
+    }
+    .tag-input { 
+      border: none; 
+      border-bottom: 1px dashed var(--stroke); 
+      background: transparent;
+      font-size: 11px;
+      padding: 2px 4px;
+      outline: none;
+      width: 70px;
+      font-family: inherit;
+    }
+    .tag-input:focus { border-color: var(--primary); }
+    
+    .preview-box {
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin: 10px 0;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    @media (max-width: 768px) {
+      body { padding-top: calc(var(--topbar-height) + 40px); }
+      .topbar { flex-wrap: wrap; padding: 10px 12px; min-height: auto; }
+      .brand { min-width: unset; }
+      .brand p { display: none; }
+      .toolbar .btn { font-size: 11px; padding: 5px 8px; }
+      .stat-grid { grid-template-columns: 1fr; }
+      .node-row { flex-direction: column; }
+      .actions { justify-content: flex-start; }
+      #scrollToTopBtn { bottom: 20px; left: 20px; width: 44px; height: 44px; font-size: 18px; }
+    }
+    
+    @media (max-width: 480px) {
+      .topbar { padding: 8px 10px; }
+      .toolbar { gap: 4px; }
+      .toolbar .btn { font-size: 10px; padding: 4px 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== دکمه شناور بازگشت به بالا ===== -->
+<button id="scrollToTopBtn" onclick="scrollToTop()" title="بازگشت به بالا">⬆</button>
+
+<div class="app-container">
+  <div class="topbar" id="mainTopbar">
+    <div class="brand">
+      <div class="logo">📚</div>
+      <div>
+        <h1>درخت دانش </h1>
+        <p class="show">ver 2.0.0- PWA</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="app.addTab()">➕ تب جدید</button>
+      <button class="btn btn-success" onclick="app.duplicateTab()">📋 کپی تب</button>
+      <button class="btn btn-warning" onclick="app.showStats()">📊 آمار</button>
+      <button class="btn" onclick="app.backupAll()">💾 بک‌آپ</button>
+      <button class="btn" onclick="app.restore()">📂 بازیابی</button>
+      <button class="btn btn-primary" onclick="app.exportHTML()">🌐 HTML</button>
+      <button class="btn btn-success" onclick="app.exportJSON()">📄 JSON</button>
+      <button class="btn btn-primary" onclick="app.exportMarkdown()">📝 MD</button>
+      <button class="btn btn-warning" onclick="app.showMergeModal()">🔀 ادغام</button>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <div class="tabs-wrap">
+      <div id="tabsHeader" class="tabs-bar"></div>
+    </div>
+
+    <div class="tree-container">
+      <div class="tree-header">
+        <input type="text" class="search-box" id="searchInput" placeholder="🔍 جستجو در نودها..." oninput="app.searchNodes(this.value)" />
+      </div>
+      <div id="treeContainer"></div>
+      <div id="statsPreview" class="preview-box" style="display:none; margin-top:14px;"></div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" style="display:none" onchange="app.handleFile(event)"/>
+<input type="file" id="imageInput" style="display:none" accept="image/*" onchange="app.handleImage(event)"/>
+<input type="file" id="mergeInput" style="display:none" onchange="app.handleMerge(event)"/>
+
+<div id="modalOverlay" class="modal-overlay" onclick="app.closeModal()"></div>
+
+<div id="imageControlModal">
+  <h3 style="margin:0 0 12px; font-size:15px;">⚙️ تنظیمات تصویر</h3>
+  <label style="display:block;color:var(--muted);font-size:13px;margin-bottom:6px;">عرض (px):</label>
+  <input type="number" id="imgWidth" value="300" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(16,24,40,.16);background:rgba(255,255,255,.88);outline:none;">
+  <br><br>
+  <label style="display:block;color:var(--muted);font-size:13px;margin-bottom:6px;">تراز:</label>
+  <div style="display:flex;gap:8px;">
+    <button class="btn" onclick="setAlign('left')">⬅️ چپ</button>
+    <button class="btn btn-primary" onclick="setAlign('center')">⬅️➡️ مرکز</button>
+    <button class="btn" onclick="setAlign('right')">➡️ راست</button>
+  </div>
+  <br>
+  <label style="display:block;color:var(--muted);font-size:13px;margin-bottom:6px;">عنوان (اختیاری):</label>
+  <input type="text" id="imgCaption" value="" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(16,24,40,.16);background:rgba(255,255,255,.88);outline:none;" placeholder="متن زیر تصویر...">
+  <div class="modal-actions">
+    <button class="btn" onclick="app.closeModal()">❌ انصراف</button>
+    <button class="btn btn-primary" onclick="app.applyImageSettings()">✅ تایید</button>
+  </div>
+</div>
+
+<div id="statsModal">
+  <h3 style="margin:0 0 12px; font-size:15px;">📊 آمار درخت دانش</h3>
+  <div id="statsContent"></div>
+  <div class="modal-actions">
+    <button class="btn btn-primary" onclick="app.closeModal()">✅ باشه</button>
+  </div>
+</div>
+
+<div id="mergeModal">
+  <h3 style="margin:0 0 12px; font-size:15px;">🔀 ادغام دو فایل</h3>
+  <p style="color:var(--muted);font-size:13px;">یک فایل JSON پشتیبان را انتخاب کنید تا با داده‌های فعلی ادغام شود.</p>
+  <label style="display:block;color:var(--muted);font-size:13px;margin-bottom:6px;">روش ادغام:</label>
+  <select id="mergeMethod" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(16,24,40,.16);background:rgba(255,255,255,.88);outline:none;font-family:inherit;">
+    <option value="skip">🔁 نادیده گرفتن تکراری‌ها</option>
+    <option value="replace">🔄 جایگزینی تکراری‌ها</option>
+    <option value="rename">✏️ تغییر نام تکراری‌ها</option>
+  </select>
+  <br><br>
+  <button class="btn btn-primary" onclick="document.getElementById('mergeInput').click()">📂 انتخاب فایل</button>
+  <div class="modal-actions">
+    <button class="btn" onclick="app.closeModal()">❌ انصراف</button>
+  </div>
+</div>
+
+<script>
+// ===== تابع بازگشت به بالا =====
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== نمایش/مخفی کردن دکمه بازگشت به بالا =====
+window.addEventListener('scroll', function() {
+  const btn = document.getElementById('scrollToTopBtn');
+  if (window.scrollY > 300) {
+    btn.style.display = 'flex';
+  } else {
+    btn.style.display = 'none';
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.scrollY > 300) {
+    document.getElementById('scrollToTopBtn').style.display = 'flex';
+  }
+});
+
+function setAlign(val) {
+  document.getElementById('imgAlign').value = val;
+  document.querySelectorAll('#imageControlModal .btn').forEach(b => b.classList.remove('btn-primary'));
+  event.target.classList.add('btn-primary');
+}
+
+class TreeApp {
+  constructor() {
+    this.storageKey = 'treeData_Persian_Pro_V5';
+    this.data = JSON.parse(localStorage.getItem(this.storageKey)) || {
+      tabs: [{ id: 1, name: 'تب اصلی', content: [] }]
+    };
+    this.currentTabId = this.data.tabs[0].id;
+    this.pendingNodeId = null;
+    this.activeImageNodeId = null;
+    this.render();
+  }
+
+  save() { localStorage.setItem(this.storageKey, JSON.stringify(this.data)); }
+  
+  getCurrentTab() {
+    return this.data.tabs.find(t => t.id === this.currentTabId) || this.data.tabs[0];
+  }
+
+  addTab(name = null) {
+    if (!name) {
+      name = prompt("📝 نام تب جدید:");
+      if (!name) return;
+    }
+    const tab = { id: Date.now(), name, content: [] };
+    this.data.tabs.push(tab);
+    this.currentTabId = tab.id;
+    this.save(); this.render();
+  }
+
+  duplicateTab() {
+    const current = this.getCurrentTab();
+    if (!current) return;
+    const newTab = {
+      id: Date.now(),
+      name: current.name + " (کپی)",
+      content: JSON.parse(JSON.stringify(current.content))
+    };
+    this.data.tabs.push(newTab);
+    this.currentTabId = newTab.id;
+    this.save(); this.render();
+  }
+
+  switchTab(id) {
+    this.currentTabId = id;
+    this.render();
+  }
+
+  renameTab(id, e) {
+    e.stopPropagation();
+    const tab = this.data.tabs.find(t => t.id === id);
+    if (!tab) return;
+    const newName = prompt("✏️ نام جدید تب:", tab.name);
+    if (newName && newName.trim()) {
+      tab.name = newName.trim();
+      this.save();
+      this.render();
+    }
+  }
+
+  deleteTab(id, e) {
+    e.stopPropagation();
+    if (!confirm(`⚠️ حذف تب "${this.data.tabs.find(t => t.id === id)?.name}"؟`)) return;
+    this.data.tabs = this.data.tabs.filter(t => t.id !== id);
+    if (this.data.tabs.length === 0) this.data.tabs = [{ id: 1, name: 'تب اصلی', content: [] }];
+    this.currentTabId = this.data.tabs[0].id;
+    this.save(); this.render();
+  }
+
+  findNode(nodes, id) {
+    for (const n of nodes) {
+      if (n.id === id) return n;
+      if (n.children?.length) {
+        const found = this.findNode(n.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  updateText(id, newHTML) {
+    const node = this.findNode(this.getCurrentTab().content, id);
+    if (node) { node.text = newHTML; this.save(); }
+  }
+
+  updateColor(id, color) {
+    const node = this.findNode(this.getCurrentTab().content, id);
+    if (node) { node.color = color; this.save(); }
+  }
+
+  updateFont(id, font) {
+    const node = this.findNode(this.getCurrentTab().content, id);
+    if (node) { node.font = font; this.save(); this.render(); }
+  }
+
+  updateFontSize(id, size) {
+    const node = this.findNode(this.getCurrentTab().content, id);
+    if (node) { node.fontSize = size; this.save(); this.render(); }
+  }
+
+  updateTags(id, tags) {
+    const node = this.findNode(this.getCurrentTab().content, id);
+    if (node) { node.tags = tags; this.save(); this.render(); }
+  }
+
+  toggleCollapse(id) {
+    const node = this.findNode(this.getCurrentTab().content, id);
+    if (node) {
+      node.collapsed = !node.collapsed;
+      this.save(); this.render();
+    }
+  }
+
+  deleteNode(id) {
+    if (!confirm("🗑️ حذف این شاخه و همه زیرشاخه‌های آن؟")) return;
+    const tab = this.getCurrentTab();
+    const removeRecursive = (list, targetId) => {
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === targetId) { list.splice(i, 1); return true; }
+        if (list[i].children?.length) {
+          if (removeRecursive(list[i].children, targetId)) return true;
+        }
+      }
+      return false;
+    };
+    removeRecursive(tab.content, id);
+    this.save(); this.render();
+  }
+
+  addNode(parentId = null) {
+    const tab = this.getCurrentTab();
+    const node = { 
+      id: Date.now(), 
+      text: "متن جدید...", 
+      children: [], 
+      collapsed: false, 
+      color: '#ffffff', 
+      font: 'inherit', 
+      fontSize: '13px',
+      tags: []
+    };
+    if (parentId === null) {
+      tab.content.push(node);
+    } else {
+      const parent = this.findNode(tab.content, parentId);
+      if (parent) {
+        parent.children.push(node);
+        parent.collapsed = false;
+      }
+    }
+    this.save(); this.render();
+  }
+
+  prepareFile(id, type) {
+    this.pendingNodeId = id;
+    if (type === 'file') document.getElementById('fileInput').click();
+    else document.getElementById('imageInput').click();
+  }
+
+  handleFile(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.updateText(this.pendingNodeId, e.target.result);
+      this.render();
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+  }
+
+  handleImage(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const imgTag = `<img src="${e.target.result}" style="width:300px;display:block;margin:10px auto;border-radius:8px;" />`;
+      const node = this.findNode(this.getCurrentTab().content, this.pendingNodeId);
+      if (node) {
+        node.text = (node.text || '') + '\n' + imgTag;
+        this.save(); this.render();
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  }
+
+  openImageSettings(id) {
+    this.activeImageNodeId = id;
+    document.getElementById('modalOverlay').style.display = 'block';
+    document.getElementById('imageControlModal').style.display = 'block';
+    document.getElementById('imgAlign').value = 'center';
+    document.querySelectorAll('#imageControlModal .btn').forEach(b => b.classList.remove('btn-primary'));
+    document.querySelector('#imageControlModal .btn:nth-child(2)').classList.add('btn-primary');
+  }
+
+  closeModal() {
+    document.getElementById('modalOverlay').style.display = 'none';
+    document.querySelectorAll('[id$="Modal"]').forEach(m => m.style.display = 'none');
+  }
+
+  applyImageSettings() {
+    const width = document.getElementById('imgWidth').value;
+    const align = document.getElementById('imgAlign').value;
+    const caption = document.getElementById('imgCaption').value.trim();
+    const node = this.findNode(this.getCurrentTab().content, this.activeImageNodeId);
+    if (node?.text) {
+      const imgRegex = /<img [^>]*src="([^"]*)"[^>]*>/g;
+      const matches = [...node.text.matchAll(imgRegex)];
+      if (matches.length) {
+        const last = matches[matches.length - 1];
+        let newTag = `<img src="${last[1]}" style="width:${width}px;display:block;margin:10px auto;text-align:${align};border-radius:8px;"`;
+        if (caption) newTag += ` alt="${caption}"`;
+        newTag += ' />';
+        if (caption) newTag += `\n<div style="text-align:${align};font-size:12px;color:var(--muted);margin-top:2px;">${caption}</div>`;
+        node.text = node.text.replace(last[0], newTag);
+        this.save(); this.render();
+      }
+    }
+    this.closeModal();
+  }
+
+  showStats() {
+    const modal = document.getElementById('statsModal');
+    const content = document.getElementById('statsContent');
+    
+    let totalNodes = 0;
+    let totalChars = 0;
+    let maxDepth = 0;
+    const countNodes = (nodes, depth = 0) => {
+      for (const n of nodes) {
+        totalNodes++;
+        totalChars += (n.text || '').length;
+        maxDepth = Math.max(maxDepth, depth + 1);
+        if (n.children?.length) countNodes(n.children, depth + 1);
+      }
+    };
+    
+    this.data.tabs.forEach(t => {
+      countNodes(t.content);
+    });
+    
+    content.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="num">${this.data.tabs.length}</div>
+          <div class="label">📑 تعداد تب‌ها</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">${totalNodes}</div>
+          <div class="label">📦 تعداد نودها</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">${totalChars.toLocaleString()}</div>
+          <div class="label">✍️ کاراکترها</div>
+        </div>
+        <div class="stat-card">
+          <div class="num">${maxDepth}</div>
+          <div class="label">📏 حداکثر عمق</div>
+        </div>
+      </div>
+      <hr style="border-color:var(--stroke);margin:14px 0;">
+      <div style="font-size:12px;color:var(--muted);">
+        <div>📊 میانگین نود در هر تب: ${(totalNodes / this.data.tabs.length).toFixed(1)}</div>
+        <div>📐 میانگین کاراکتر در هر نود: ${totalNodes ? (totalChars / totalNodes).toFixed(1) : 0}</div>
+      </div>
+    `;
+    
+    document.getElementById('modalOverlay').style.display = 'block';
+    modal.style.display = 'block';
+  }
+
+  showMergeModal() {
+    document.getElementById('modalOverlay').style.display = 'block';
+    document.getElementById('mergeModal').style.display = 'block';
+  }
+
+  handleMerge(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importData = JSON.parse(e.target.result);
+        if (!importData.tabs || !Array.isArray(importData.tabs)) {
+          alert("❌ فرمت فایل نامعتبر است.");
+          this.closeModal();
+          return;
+        }
+        
+        const method = document.getElementById('mergeMethod').value;
+        
+        importData.tabs.forEach(importTab => {
+          const existing = this.data.tabs.find(t => t.name === importTab.name);
+          if (existing) {
+            if (method === 'skip') {
+              // Do nothing
+            } else if (method === 'replace') {
+              existing.content = importTab.content;
+            } else if (method === 'rename') {
+              const newName = importTab.name + ' (وارد شده)';
+              importTab.id = Date.now() + Math.random() * 1000;
+              importTab.name = newName;
+              this.data.tabs.push(importTab);
+            }
+          } else {
+            importTab.id = Date.now() + Math.random() * 1000;
+            this.data.tabs.push(importTab);
+          }
+        });
+        
+        this.save();
+        this.render();
+        this.closeModal();
+        alert(`✅ ادغام با موفقیت انجام شد!\n📊 کل تب‌ها: ${this.data.tabs.length}`);
+      } catch (err) {
+        alert("❌ خطا در خواندن فایل: " + err.message);
+        this.closeModal();
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+  }
+
+  backupAll() {
+    const blob = new Blob([JSON.stringify(this.data, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  restore() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          this.data = JSON.parse(ev.target.result);
+          this.currentTabId = this.data.tabs?.[0]?.id ?? 1;
+          this.save(); this.render();
+          alert("✅ بازیابی با موفقیت انجام شد!");
+        } catch(err) {
+          alert("❌ خطا در خواندن فایل: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+
+  searchNodes(query) {
+    const allNodes = document.querySelectorAll('.node');
+    allNodes.forEach(node => {
+      const text = node.querySelector('.node-text')?.innerText || '';
+      node.style.display = text.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
+    });
+    document.querySelectorAll('.node').forEach(n => {
+      if (n.style.display !== 'none') {
+        let parent = n.parentElement?.closest('.node');
+        while (parent) {
+          parent.style.display = '';
+          parent = parent.parentElement?.closest('.node');
+        }
+      }
+    });
+  }
+
+  addTag(nodeId, tag) {
+    const node = this.findNode(this.getCurrentTab().content, nodeId);
+    if (!node) return;
+    if (!node.tags) node.tags = [];
+    if (!node.tags.includes(tag)) {
+      node.tags.push(tag);
+      this.save();
+      this.render();
+    }
+  }
+
+  removeTag(nodeId, tag) {
+    const node = this.findNode(this.getCurrentTab().content, nodeId);
+    if (!node) return;
+    if (node.tags) {
+      node.tags = node.tags.filter(t => t !== tag);
+      this.save();
+      this.render();
+    }
+  }
+
+  exportHTML() {
+    const doc = document.implementation.createHTMLDocument('درخت دانش');
+    const head = doc.head;
+    const body = doc.body;
+
+    const style = doc.createElement('style');
+    style.textContent = `
+      :root { --bg:#f6f8fb; --card:#fff; --text:#122033; --muted:#5b6b84; --stroke:rgba(16,24,40,.12); --primary:#2f80ed; --radius:14px; }
+      * { box-sizing:border-box; }
+      body { margin:0; font-family:"Vazir","Tahoma",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans","Helvetica Neue",sans-serif;
+             background:radial-gradient(900px 500px at 10% -10%,rgba(47,128,237,.18),transparent 55%),linear-gradient(180deg,var(--bg),#eef2ff);
+             color:var(--text); padding:22px; line-height:1.7; direction:rtl; text-align:right; }
+      .page { max-width:1100px; margin:0 auto; }
+      h1, h2, h3, h4, h5, h6 { text-align:right; }
+      .top { background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius); padding:14px 16px;
+             display:flex; justify-content:space-between; align-items:center; gap:12px; box-shadow:0 10px 30px rgba(0,0,0,.04); margin-bottom:14px; flex-wrap:wrap; }
+      .top-actions { display:flex; gap:8px; flex-wrap:wrap; }
+      .btn { border:1px solid var(--stroke); background:#fff; padding:8px 12px; border-radius:12px; cursor:pointer; font-weight:800; font-size:13px; }
+      .btn:hover { background:#f0f4ff; }
+      .btn-sm { padding:5px 10px; font-size:12px; }
+      .tab { margin:0 0 14px; background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius); overflow:hidden; }
+      .tab-toggle { width:100%; display:flex; align-items:center; gap:10px; padding:12px 14px;
+                    border:0; background:linear-gradient(180deg,rgba(47,128,237,.08),rgba(47,128,237,.02));
+                    cursor:pointer; font-weight:900; border-bottom:1px solid rgba(16,24,40,.08); }
+      .tab-toggle:hover { background:rgba(47,128,237,.12); }
+      .chev { width:18px; color:var(--primary); font-weight:1000; text-align:center; }
+      .tab-title { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .tab-panel { padding:10px 16px 16px; }
+      .node { position:relative; padding:12px; border-radius:12px; border:1px solid rgba(16,24,40,.10); background:#fbfcff; margin:10px 0; }
+      .node-actions { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+      .node-text { white-space:pre-wrap; word-break:break-word; font-family:"Vazir","Tahoma",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13px; margin:0; line-height:1.6; text-align:right; direction:rtl; }
+      img { max-width:100%; height:auto; display:block; margin:10px auto; border-radius:8px; }
+      .children { margin-right:14px; padding-right:12px; border-right:2px dashed rgba(47,128,237,.20); margin-top:10px; }
+      .tag { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10px; background:rgba(47,128,237,.12); border:1px solid rgba(47,128,237,.25); margin:2px; }
+      @media print { body{background:#fff;} .btn{display:none;} .node{border:1px solid #ddd;break-inside:avoid;page-break-inside:avoid;} .tab{box-shadow:none;} }
+    `;
+    head.appendChild(style);
+
+    const page = doc.createElement('div'); page.className = 'page';
+
+    const top = doc.createElement('div'); top.className = 'top';
+    top.innerHTML = `
+      <div>
+        <div style="font-weight:900;">📚 خروجی درخت دانش</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:2px;">${this.data.tabs.length} تب | دکمه‌های مستقل برای هر نود</div>
+      </div>
+      <div class="top-actions">
+        <button class="btn btn-sm" onclick="window.print()">🖨️ چاپ همه</button>
+        <button class="btn btn-sm" onclick="exportAllTabsAsText()">📝 خروجی متن</button>
+      </div>
+    `;
+    page.appendChild(top);
+
+    const esc = (s) => String(s ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+    const buildNodes = (nodes, level = 0) => {
+      if (!nodes?.length) return '';
+      return nodes.map(n => {
+        const children = n.children?.length ? `<div class="children">${buildNodes(n.children, level + 1)}</div>` : '';
+        const bgStyle = n.color && n.color !== '#ffffff' ? ` style="background:${n.color};"` : '';
+        const fontStyle = n.font && n.font !== 'inherit' ? ` style="font-family:${n.font};font-size:${n.fontSize || '13px'};"` : '';
+        const tags = (n.tags?.length) ? `<div>${n.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : '';
+        return `
+          <div class="node" data-node-id="${n.id}"${bgStyle}>
+            <div class="node-actions">
+              <button class="btn btn-sm" onclick="printNode(this)" title="پرینت">🖨️</button>
+              <button class="btn btn-sm" onclick="editNode(this)" title="ویرایش">✏️</button>
+              <button class="btn btn-sm" onclick="copyNode(this)" title="کپی">📋</button>
+              <button class="btn btn-sm" onclick="deleteNode(this)" title="حذف">🗑️</button>
+              <button class="btn btn-sm" onclick="addChildNode(this)" title="افزودن زیرشاخه">➕</button>
+            </div>
+            <div class="node-text"${fontStyle}>${n.text || ''}</div>
+            ${tags}
+            ${children}
+          </div>`;
+      }).join('');
+    };
+
+    this.data.tabs.forEach((tab, idx) => {
+      const sec = doc.createElement('section'); sec.className = 'tab';
+      const panelId = `panel_${tab.id}`;
+      const isOpen = idx === 0;
+
+      sec.innerHTML = `
+        <button class="tab-toggle" type="button" data-target="${panelId}" aria-expanded="${isOpen ? 'true' : 'false'}">
+          <span class="chev">${isOpen ? '▾' : '▸'}</span>
+          <span class="tab-title">${esc(tab.name)}</span>
+        </button>
+        <div id="${panelId}" class="tab-panel" ${isOpen ? '' : 'hidden'}>
+          <div class="tree">${buildNodes(tab.content)}</div>
+        </div>
+      `;
+      page.appendChild(sec);
+    });
+
+    body.appendChild(page);
+
+    const script = doc.createElement('script');
+    script.textContent = `
+      document.addEventListener('click', function(e) {
+        const toggleBtn = e.target.closest('.tab-toggle');
+        if (!toggleBtn) return;
+        const panelId = toggleBtn.getAttribute('data-target');
+        const panel = document.getElementById(panelId);
+        if (!panel) return;
+        const hidden = panel.hasAttribute('hidden');
+        const chev = toggleBtn.querySelector('.chev');
+        if (hidden) {
+          panel.removeAttribute('hidden');
+          toggleBtn.setAttribute('aria-expanded', 'true');
+          if (chev) chev.textContent = '▾';
+        } else {
+          panel.setAttribute('hidden', '');
+          toggleBtn.setAttribute('aria-expanded', 'false');
+          if (chev) chev.textContent = '▸';
+        }
+      });
+
+      window.printNode = function(btn) {
+        const node = btn.closest('.node');
+        const content = node.querySelector('.node-text')?.innerHTML || '';
+        const bg = node.style.background || '#ffffff';
+        const win = window.open('', '_blank', 'width=700,height=500');
+        win.document.write('<html dir="rtl"><head><title>چاپ</title>');
+        win.document.write('<style>body{font-family:sans-serif;padding:20px;line-height:1.7;text-align:right;direction:rtl;}img{max-width:100%;border-radius:8px;}.container{background:' + bg + ';padding:16px;border-radius:12px;}</style>');
+        win.document.write('</head><body><div class="container">' + content + '</div></body></html>');
+        win.document.close();
+        win.focus();
+        setTimeout(() => win.print(), 300);
+      };
+
+      window.editNode = function(btn) {
+        const textDiv = btn.closest('.node').querySelector('.node-text');
+        const isEditable = textDiv.contentEditable === 'true';
+        textDiv.contentEditable = !isEditable;
+        textDiv.style.outline = isEditable ? 'none' : '2px dashed #2f80ed';
+        textDiv.style.borderRadius = '8px';
+        textDiv.style.padding = '4px 8px';
+        textDiv.style.background = isEditable ? '' : '#fffff0';
+        btn.textContent = isEditable ? '✏️' : '💾';
+        if (!isEditable) textDiv.focus();
+      };
+
+      window.copyNode = function(btn) {
+        const text = btn.closest('.node').querySelector('.node-text')?.innerText || '';
+        navigator.clipboard.writeText(text).then(() => alert('📋 کپی شد')).catch(() => alert('❌ خطا'));
+      };
+
+      window.deleteNode = function(btn) {
+        if (confirm("🗑️ حذف شود؟")) btn.closest('.node').remove();
+      };
+
+      window.addChildNode = function(btn) {
+        const node = btn.closest('.node');
+        let childrenDiv = node.querySelector('.children');
+        if (!childrenDiv) {
+          childrenDiv = document.createElement('div');
+          childrenDiv.className = 'children';
+          node.appendChild(childrenDiv);
+        }
+        const newNode = document.createElement('div');
+        newNode.className = 'node';
+        newNode.innerHTML = \`
+          <div class="node-actions">
+            <button class="btn btn-sm" onclick="printNode(this)">🖨️</button>
+            <button class="btn btn-sm" onclick="editNode(this)">✏️</button>
+            <button class="btn btn-sm" onclick="copyNode(this)">📋</button>
+            <button class="btn btn-sm" onclick="deleteNode(this)">🗑️</button>
+            <button class="btn btn-sm" onclick="addChildNode(this)">➕</button>
+          </div>
+          <div class="node-text" contenteditable="true" style="outline:2px dashed #2f80ed;border-radius:8px;padding:4px 8px;background:#fffff0;text-align:right;direction:rtl;">متن جدید...</div>
+        \`;
+        childrenDiv.appendChild(newNode);
+        newNode.querySelector('.node-text')?.focus();
+      };
+
+      window.exportAllTabsAsText = function() {
+        let text = '';
+        document.querySelectorAll('.tab').forEach(tab => {
+          const title = tab.querySelector('.tab-title')?.textContent || 'بدون نام';
+          text += '\\n=== ' + title + ' ===\\n\\n';
+          tab.querySelectorAll('.node').forEach(node => {
+            const nodeText = node.querySelector('.node-text')?.innerText || '';
+            if (nodeText) text += nodeText + '\\n\\n';
+          });
+        });
+        const blob = new Blob([text], { type:'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'export_all_tabs.txt'; a.click();
+        URL.revokeObjectURL(url);
+      };
+    `;
+    body.appendChild(script);
+
+    const blob = new Blob([doc.documentElement.outerHTML], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `درخت_دانش_${new Date().toISOString().slice(0,10)}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+    alert("✅ خروجی HTML با موفقیت ساخته شد!");
+  }
+
+  exportJSON() {
+    const blob = new Blob([JSON.stringify(this.data, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `data_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    alert("✅ خروجی JSON با موفقیت ساخته شد!");
+  }
+
+  exportMarkdown() {
+    let md = `# درخت دانش\n\n`;
+    md += `> تاریخ: ${new Date().toLocaleDateString('fa-IR')} | ${this.data.tabs.length} تب\n\n`;
+    md += `---\n\n`;
+    
+    const buildMD = (nodes, level = 0) => {
+      let result = '';
+      for (const n of nodes) {
+        const indent = '  '.repeat(level);
+        const prefix = level === 0 ? '-' : '*';
+        result += `${indent}${prefix} ${n.text || '(بدون متن)'}\n`;
+        if (n.children?.length) result += buildMD(n.children, level + 1);
+      }
+      return result;
+    };
+
+    this.data.tabs.forEach(tab => {
+      md += `## ${tab.name}\n\n`;
+      md += buildMD(tab.content);
+      md += '\n---\n\n';
+    });
+
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `درخت_دانش_${new Date().toISOString().slice(0,10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    alert("✅ خروجی Markdown با موفقیت ساخته شد!");
+  }
+
+  render() {
+    this.renderTabs();
+    this.renderTree();
+  }
+
+  renderTabs() {
+    const header = document.getElementById('tabsHeader');
+    header.innerHTML = '';
+    this.data.tabs.forEach(tab => {
+      const div = document.createElement('div');
+      div.className = `tab ${tab.id === this.currentTabId ? 'active' : ''}`;
+      div.onclick = () => this.switchTab(tab.id);
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'tab-name';
+      nameSpan.textContent = tab.name;
+
+      const renameBtn = document.createElement('span');
+      renameBtn.className = 'tab-rename';
+      renameBtn.textContent = '✏️';
+      renameBtn.title = 'تغییر نام';
+      renameBtn.onclick = (e) => this.renameTab(tab.id, e);
+
+      const xBtn = document.createElement('span');
+      xBtn.className = 'tab-x';
+      xBtn.textContent = '×';
+      xBtn.title = 'حذف تب';
+      xBtn.onclick = (e) => this.deleteTab(tab.id, e);
+
+      div.appendChild(nameSpan);
+      div.appendChild(renameBtn);
+      div.appendChild(xBtn);
+      header.appendChild(div);
+    });
+  }
+
+  renderTree() {
+    const container = document.getElementById('treeContainer');
+    container.innerHTML = '';
+
+    const rootBtn = document.createElement('button');
+    rootBtn.className = 'root-btn';
+    rootBtn.textContent = '➕ افزودن شاخه اصلی';
+    rootBtn.onclick = () => this.addNode();
+    container.appendChild(rootBtn);
+
+    const treeDiv = document.createElement('div');
+    treeDiv.style.marginTop = '12px';
+    this.buildUI(this.getCurrentTab().content, treeDiv);
+    container.appendChild(treeDiv);
+  }
+
+  buildUI(nodes, parentEl) {
+    nodes.forEach(node => {
+      const nodeDiv = document.createElement('div');
+      nodeDiv.className = `node ${node.collapsed ? 'collapsed' : ''}`;
+
+      const content = document.createElement('div');
+      content.className = 'node-content';
+      if (node.color && node.color !== '#ffffff') content.style.background = node.color;
+
+      const row = document.createElement('div');
+      row.className = 'node-row';
+
+      const left = document.createElement('div');
+      left.className = 'left-part';
+
+      const toggle = document.createElement('div');
+      toggle.className = 'toggle';
+      toggle.textContent = (node.children?.length) ? (node.collapsed ? '▶' : '▼') : '•';
+      toggle.onclick = () => this.toggleCollapse(node.id);
+
+      const textDiv = document.createElement('div');
+      textDiv.className = 'node-text';
+      textDiv.contentEditable = true;
+      textDiv.style.fontFamily = node.font || 'inherit';
+      textDiv.style.fontSize = node.fontSize || '13px';
+      textDiv.innerHTML = node.text || '';
+      textDiv.onblur = (e) => this.updateText(node.id, e.target.innerHTML);
+
+      textDiv.addEventListener('dragover', (e) => e.preventDefault());
+      textDiv.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file?.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const img = `<img src="${ev.target.result}" style="width:300px;display:block;margin:10px auto;border-radius:8px;" />`;
+            textDiv.innerHTML += '\n' + img;
+            this.updateText(node.id, textDiv.innerHTML);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      left.appendChild(toggle);
+      left.appendChild(textDiv);
+
+      const tagsContainer = document.createElement('div');
+      tagsContainer.className = 'tags-container';
+      if (node.tags?.length) {
+        node.tags.forEach(tag => {
+          const tagEl = document.createElement('span');
+          tagEl.className = 'tag';
+          tagEl.textContent = tag;
+          tagEl.style.cursor = 'pointer';
+          tagEl.title = 'حذف تگ';
+          tagEl.onclick = (e) => {
+            e.stopPropagation();
+            this.removeTag(node.id, tag);
+          };
+          tagsContainer.appendChild(tagEl);
+        });
+      }
+      const tagInput = document.createElement('input');
+      tagInput.className = 'tag-input';
+      tagInput.placeholder = '+ تگ';
+      tagInput.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const val = tagInput.value.trim();
+          if (val) {
+            this.addTag(node.id, val);
+            tagInput.value = '';
+          }
+        }
+      };
+      tagsContainer.appendChild(tagInput);
+      left.appendChild(tagsContainer);
+
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      const colorPicker = document.createElement('input');
+      colorPicker.type = 'color';
+      colorPicker.className = 'color-picker';
+      colorPicker.value = node.color || '#ffffff';
+      colorPicker.oninput = (e) => {
+        content.style.background = e.target.value;
+        this.updateColor(node.id, e.target.value);
+      };
+      actions.appendChild(colorPicker);
+
+      const fontSelect = document.createElement('select');
+      fontSelect.className = 'font-select';
+      ['inherit', 'Vazir', 'Tahoma', 'ui-monospace', 'Arial', 'Georgia'].forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f;
+        if (f === (node.font || 'inherit')) opt.selected = true;
+        fontSelect.appendChild(opt);
+      });
+      fontSelect.onchange = (e) => {
+        textDiv.style.fontFamily = e.target.value;
+        this.updateFont(node.id, e.target.value);
+      };
+      actions.appendChild(fontSelect);
+
+      const sizeInput = document.createElement('input');
+      sizeInput.type = 'number';
+      sizeInput.className = 'size-input';
+      sizeInput.value = parseInt(node.fontSize) || 13;
+      sizeInput.min = 8; sizeInput.max = 72;
+      sizeInput.onchange = (e) => {
+        const val = e.target.value + 'px';
+        textDiv.style.fontSize = val;
+        this.updateFontSize(node.id, val);
+      };
+      actions.appendChild(sizeInput);
+
+      const btns = [
+        { label: '➕', cls: 'primary', action: () => this.addNode(node.id) },
+        { label: '📄', cls: '', action: () => this.prepareFile(node.id, 'file') },
+        { label: '🖼️', cls: '', action: () => this.prepareFile(node.id, 'image') },
+        { label: '⚙️', cls: 'warning', action: () => this.openImageSettings(node.id) },
+        { label: '📋', cls: 'success', action: () => {
+          const text = textDiv.innerText || '';
+          navigator.clipboard.writeText(text).then(() => alert('📋 کپی شد'));
+        }},
+        { label: '🗑️', cls: 'danger', action: () => this.deleteNode(node.id) }
+      ];
+      btns.forEach(b => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `icon-btn ${b.cls}`.trim();
+        btn.textContent = b.label;
+        btn.onclick = (e) => { e.stopPropagation(); b.action(); };
+        actions.appendChild(btn);
+      });
+
+      row.appendChild(left);
+      row.appendChild(actions);
+      content.appendChild(row);
+      nodeDiv.appendChild(content);
+
+      const childrenDiv = document.createElement('div');
+      childrenDiv.className = 'children-container';
+      nodeDiv.appendChild(childrenDiv);
+
+      if (node.children?.length) this.buildUI(node.children, childrenDiv);
+
+      parentEl.appendChild(nodeDiv);
+    });
+  }
+}
+
+const app = new TreeApp();
+
+// ===== PWA: سرویس ورکر ساده =====
+if ('serviceWorker' in navigator) {
+  const swScript = `
+    const CACHE = 'tree-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request)).catch(() => new Response('آفلاین'))
+      );
+    });
+  `;
+  
+  const blob = new Blob([swScript], {type: 'application/javascript'});
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).then(() => {
+    console.log('✅ PWA فعال شد - برنامه قابل نصب روی گوشی');
+  }).catch(err => {
+    console.log('❌ PWA فعال نشد (فقط روی HTTPS کار می‌کنه):', err);
+  });
+}
+</script>
+</body>
+</html>
