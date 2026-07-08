@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -30,7 +29,16 @@
     padding-top: calc(var(--topbar-height) + 20px);
   }
 
-  /* ===== نوار ابزار ثابت ===== */
+  @media print {
+    body { background: white !important; padding: 0 !important; padding-top: 0 !important; }
+    .topbar, #scrollToTopBtn, .search-box, .modal-overlay, [id$="Modal"], .root-btn, .actions, .tags-container, .color-picker, .font-select, .size-input, .tab-x, .tab-rename { display: none !important; }
+    .node { page-break-inside: avoid; }
+    .node-content { background: white !important; border: 1px solid #ccc !important; }
+    .node-text { font-size: 12pt !important; }
+    .tab { border: none !important; background: none !important; }
+    .tab.active { font-weight: bold; border-bottom: 2px solid #333; }
+  }
+
   .topbar {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 12px 16px;
@@ -65,7 +73,6 @@
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
   .toolbar .btn { font-size: 12px; padding: 7px 10px; }
 
-  /* ===== دکمه شناور بازگشت به بالا ===== */
   #scrollToTopBtn {
     position: fixed;
     bottom: 30px;
@@ -92,7 +99,6 @@
   }
   #scrollToTopBtn:active { transform: scale(.95); }
 
-  /* ===== بقیه استایل‌ها ===== */
   .app-container { max-width: 1200px; margin: 0 auto; }
   .btn {
     border: 1px solid var(--stroke2);
@@ -214,7 +220,6 @@
     text-align: right;
     direction: rtl;
   }
-  .node-text img { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
 
   .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start; }
   .icon-btn {
@@ -233,19 +238,6 @@
   .icon-btn.danger { border-color: rgba(231,76,60,.45); background: rgba(231,76,60,.10); }
   .icon-btn.warning { border-color: rgba(243,156,18,.45); background: rgba(243,156,18,.10); }
 
-  /* دکمه ⚙️ روی خود تصویر */
-  .img-ctrl-btn{
-    display:block;
-    margin: 6px auto 0;
-    padding: 6px 9px;
-    font-size: 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(243,156,18,.45);
-    background: rgba(243,156,18,.10);
-    cursor: pointer;
-    z-index: 5;
-  }
-
   .node.collapsed > .children-container { display: none; }
   .children-container { transition: all 0.15s ease; }
 
@@ -254,7 +246,7 @@
   .size-input { width: 42px; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--stroke); text-align: center; font-size: 11px; }
 
   .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.35); z-index: 999; }
-  #imageControlModal, #statsModal, #mergeModal {
+  #statsModal, #mergeModal {
     display: none; position: fixed; top: 50%; left: 50%;
     transform: translate(-50%,-50%);
     background: rgba(255,255,255,.97);
@@ -347,10 +339,10 @@
       <button class="btn btn-warning" onclick="app.showStats()">📊 آمار</button>
       <button class="btn" onclick="app.backupAll()">💾 بک‌آپ</button>
       <button class="btn" onclick="app.restore()">📂 بازیابی</button>
-      <button class="btn btn-primary" onclick="app.exportHTML()">🌐 HTML</button>
       <button class="btn btn-success" onclick="app.exportJSON()">📄 JSON</button>
       <button class="btn btn-primary" onclick="app.exportMarkdown()">📝 MD</button>
       <button class="btn btn-warning" onclick="app.showMergeModal()">🔀 ادغام</button>
+      <button class="btn btn-danger" onclick="app.printTree()">🖨️ پرینت کل</button>
     </div>
   </div>
 
@@ -370,31 +362,9 @@
 </div>
 
 <input type="file" id="fileInput" style="display:none" onchange="app.handleFile(event)"/>
-<input type="file" id="imageInput" style="display:none" accept="image/*" onchange="app.handleImage(event)"/>
 <input type="file" id="mergeInput" style="display:none" onchange="app.handleMerge(event)"/>
 
 <div id="modalOverlay" class="modal-overlay" onclick="app.closeModal()"></div>
-
-<div id="imageControlModal">
-  <h3 style="margin:0 0 12px; font-size:15px;">⚙️ تنظیمات تصویر</h3>
-  <label style="display:block;color:var(--muted);font-size:13px;margin-bottom:6px;">عرض (px):</label>
-  <input type="number" id="imgWidth" value="300" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(16,24,40,.16);background:rgba(255,255,255,.88);outline:none;">
-  <br><br>
-  <label style="display:block;color:var(--muted);font-size:13px;margin-bottom:6px;">تراز:</label>
-  <div style="display:flex;gap:8px;">
-    <button class="btn" onclick="setAlign('left')">⬅️ چپ</button>
-    <button class="btn btn-primary" onclick="setAlign('center')">⬅️➡️ مرکز</button>
-    <button class="btn" onclick="setAlign('right')">➡️ راست</button>
-  </div>
-  <br>
-  <label style="display:block;color:var(--muted);font-size:13px;margin-bottom:6px;">عنوان (اختیاری):</label>
-  <input type="text" id="imgCaption" value="" style="width:100%;padding:10px;border-radius:12px;border:1px solid rgba(16,24,40,.16);background:rgba(255,255,255,.88);outline:none;" placeholder="متن زیر تصویر...">
-  <div class="modal-actions">
-    <button class="btn btn-danger" onclick="app.deleteActiveImage()">🗑️ حذف تصویر</button>
-    <button class="btn" onclick="app.closeModal()">❌ انصراف</button>
-    <button class="btn btn-primary" onclick="app.applyImageSettings()">✅ تایید</button>
-  </div>
-</div>
 
 <div id="statsModal">
   <h3 style="margin:0 0 12px; font-size:15px;">📊 آمار درخت دانش</h3>
@@ -433,35 +403,12 @@ document.addEventListener('DOMContentLoaded', function() {
   if (window.scrollY > 300) document.getElementById('scrollToTopBtn').style.display = 'flex';
 });
 
-function setAlign(val) {
-  document.getElementById('imgAlign').value = val;
-
-  document.querySelectorAll('#imageControlModal .btn').forEach(b => {
-    b.classList.remove('btn-primary');
-  });
-
-  // دکمه متناظر با val
-  // ترتیب در HTML: left, center, right
-  if (val === 'center') {
-    document.querySelector('#imageControlModal .btn.btn-primary')?.classList.remove('btn-primary');
-    document.querySelectorAll('#imageControlModal .btn')[1]?.classList.add('btn-primary');
-  } else if (val === 'left') {
-    document.querySelectorAll('#imageControlModal .btn')[0]?.classList.add('btn-primary');
-  } else if (val === 'right') {
-    document.querySelectorAll('#imageControlModal .btn')[2]?.classList.add('btn-primary');
-  }
-}
-
 class TreeApp {
   constructor() {
     this.storageKey = 'treeData_Persian_Pro_V5';
     this.data = JSON.parse(localStorage.getItem(this.storageKey)) || { tabs: [{ id: 1, name: 'تب اصلی', content: [] }] };
     this.currentTabId = this.data.tabs[0].id;
     this.pendingNodeId = null;
-
-    this.activeImageNodeId = null;
-    this.activeImageIndex = null;
-
     this.render();
   }
 
@@ -542,15 +489,36 @@ class TreeApp {
     if (node) { node.color = color; this.save(); }
   }
 
+  // ===== تغییر فونت و سایز بدون سوال (به همه زیرشاخه‌ها) =====
   updateFont(id, font) {
     const node = this.findNode(this.getCurrentTab().content, id);
-    if (node) { node.font = font; this.save(); this.render(); }
+    if (!node) return;
+    this._applyFontRecursive(node, font);
+    this.save();
+    this.render();
+  }
+
+  _applyFontRecursive(node, font) {
+    node.font = font;
+    if (node.children) {
+      node.children.forEach(child => this._applyFontRecursive(child, font));
+    }
   }
 
   updateFontSize(id, size) {
     const node = this.findNode(this.getCurrentTab().content, id);
-    if (node) { node.fontSize = size; this.save(); }
+    if (!node) return;
+    this._applyFontSizeRecursive(node, size);
+    this.save();
   }
+
+  _applyFontSizeRecursive(node, size) {
+    node.fontSize = size;
+    if (node.children) {
+      node.children.forEach(child => this._applyFontSizeRecursive(child, size));
+    }
+  }
+  // ========================================
 
   updateTags(id, tags) {
     const node = this.findNode(this.getCurrentTab().content, id);
@@ -601,10 +569,9 @@ class TreeApp {
     this.save(); this.render();
   }
 
-  prepareFile(id, type) {
+  prepareFile(id) {
     this.pendingNodeId = id;
-    if (type === 'file') document.getElementById('fileInput').click();
-    else document.getElementById('imageInput').click();
+    document.getElementById('fileInput').click();
   }
 
   handleFile(event) {
@@ -619,117 +586,9 @@ class TreeApp {
     event.target.value = "";
   }
 
-  handleImage(event) {
-    const file = event.target.files && event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imgTag = `<img src="${e.target.result}" style="width:300px;display:block;margin:10px auto;border-radius:8px;" />`;
-      const node = this.findNode(this.getCurrentTab().content, this.pendingNodeId);
-      if (node) {
-        node.text = (node.text || '') + '\n' + imgTag;
-        this.save(); this.render();
-      }
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
-  }
-
-  openImageSettings(id, imageIndex = null) {
-    this.activeImageNodeId = id;
-    this.activeImageIndex = (imageIndex !== null && imageIndex !== undefined) ? imageIndex : null;
-
-    document.getElementById('modalOverlay').style.display = 'block';
-    document.getElementById('imageControlModal').style.display = 'block';
-
-    document.getElementById('imgWidth').value = 300;
-    document.getElementById('imgCaption').value = '';
-
-    // پیش‌فرض تراز مرکز
-    document.getElementById('imgAlign').value = 'center';
-    document.querySelectorAll('#imageControlModal .btn').forEach(b => b.classList.remove('btn-primary'));
-
-    // center در آرایه btn ها index=1
-    document.querySelectorAll('#imageControlModal .btn')[1]?.classList.add('btn-primary');
-  }
-
   closeModal() {
     document.getElementById('modalOverlay').style.display = 'none';
     document.querySelectorAll('[id$="Modal"]').forEach(m => m.style.display = 'none');
-  }
-
-  _getActiveImageMatches(nodeText) {
-    const imgRegex = /<img [^>]*src="([^"]*)"[^>]*\/?>/g;
-    const matches = [...(nodeText || '').matchAll(imgRegex)];
-    return matches;
-  }
-
-  applyImageSettings() {
-    const width = document.getElementById('imgWidth').value;
-    const align = document.getElementById('imgAlign').value;
-    const caption = document.getElementById('imgCaption').value.trim();
-
-    const node = this.findNode(this.getCurrentTab().content, this.activeImageNodeId);
-    if (!node?.text) { this.closeModal(); return; }
-
-    const matches = this._getActiveImageMatches(node.text);
-    if (!matches.length) { this.closeModal(); return; }
-
-    const idx = Number.isInteger(this.activeImageIndex) ? this.activeImageIndex : (matches.length - 1);
-    const target = matches[idx] ?? matches[matches.length - 1];
-
-    // ساخت alt با escape ساده
-    const safeCaption = caption.replaceAll('"', '&quot;');
-
-    const newImgTag =
-      `<img src="${target[1]}" style="width:${width}px;display:block;margin:10px auto;text-align:${align};border-radius:8px;"` +
-      `${caption ? ` alt="${safeCaption}"` : ''} />` +
-      (caption
-        ? `\n<div style="text-align:${align};font-size:12px;color:var(--muted);margin-top:2px;">${caption}</div>`
-        : '');
-
-    // جایگزینی img
-    let updated = node.text.replace(target[0], newImgTag);
-
-    // اگر کپشن خالی شد، هر کپشن div استاندارد بعد از img را حذف کن
-    if (!caption) {
-      updated = updated.replace(
-        /\n?<div style="text-align:[^"]*;font-size:12px;color:var\(--muted\);margin-top:2px;">[\s\S]*?<\/div>/g,
-        ''
-      );
-    }
-
-    node.text = updated;
-    this.save();
-    this.render();
-    this.closeModal();
-  }
-
-  deleteActiveImage() {
-    const node = this.findNode(this.getCurrentTab().content, this.activeImageNodeId);
-    if (!node?.text) { this.closeModal(); return; }
-
-    const matches = this._getActiveImageMatches(node.text);
-    if (!matches.length) { this.closeModal(); return; }
-
-    const idx = Number.isInteger(this.activeImageIndex) ? this.activeImageIndex : (matches.length - 1);
-    const target = matches[idx] ?? matches[matches.length - 1];
-
-    let updated = node.text;
-
-    // حذف خود img
-    updated = updated.replace(target[0], '');
-
-    // حذف div کپشن استاندارد بعد از img (اگر وجود داشته باشد)
-    updated = updated.replace(
-      /\n?<div style="text-align:[^"]*;font-size:12px;color:var\(--muted\);margin-top:2px;">[\s\S]*?<\/div>/g,
-      ''
-    );
-
-    node.text = updated;
-    this.save();
-    this.render();
-    this.closeModal();
   }
 
   showStats() {
@@ -906,15 +765,7 @@ class TreeApp {
     }
   }
 
-  exportHTML() {
-    // بدون تغییر نسبت به نسخه قبلی شما
-    // (همان تابعی که در فایل قبلی‌ات بود را نگه دار)
-    // ... 
-    alert("برای جلوگیری از خطا، exportHTML را مثل فایل خودت نگه دار.");
-  }
-
   exportJSON() {
-    // بدون تغییر نسبت به نسخه قبلی شما
     const blob = new Blob([JSON.stringify(this.data, null, 2)], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -926,7 +777,6 @@ class TreeApp {
   }
 
   exportMarkdown() {
-    // بدون تغییر نسبت به نسخه قبلی شما
     let md = `# درخت دانش\n\n`;
     md += `> تاریخ: ${new Date().toLocaleDateString('fa-IR')} | ${this.data.tabs.length} تب\n\n`;
     md += `---\n\n`;
@@ -957,6 +807,81 @@ class TreeApp {
     URL.revokeObjectURL(url);
     alert("✅ خروجی Markdown با موفقیت ساخته شد!");
   }
+
+  // ===== دکمه پرینت برای کل درخت =====
+  printTree() {
+    const expandAll = (nodes) => {
+      nodes.forEach(n => {
+        n.collapsed = false;
+        if (n.children?.length) expandAll(n.children);
+      });
+    };
+    this.data.tabs.forEach(t => expandAll(t.content));
+    this.save();
+    this.render();
+    setTimeout(() => window.print(), 100);
+  }
+
+  // ===== دکمه پرینت برای یک نود خاص =====
+  printNode(id) {
+    const tab = this.getCurrentTab();
+    const node = this.findNode(tab.content, id);
+    if (!node) return;
+
+    // باز کردن همه زیرشاخه‌های این نود
+    const expandNode = (n) => {
+      n.collapsed = false;
+      if (n.children) n.children.forEach(c => expandNode(c));
+    };
+    expandNode(node);
+    this.save();
+    this.render();
+
+    // ساخت HTML فقط برای این نود و زیرشاخه‌هایش
+    const html = this._nodeToHTML(node);
+
+    // باز کردن پنجره جدید و چاپ
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    printWindow.document.write(`
+      <html dir="rtl">
+      <head>
+        <title>چاپ شاخه</title>
+        <style>
+          body { font-family: "Vazir", "Tahoma", sans-serif; padding: 20px; direction: rtl; }
+          .node { margin: 10px 0; padding-right: 14px; }
+          .node-content { padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+          .node-text { font-size: 13px; line-height: 1.55; }
+          .children-container { margin-top: 8px; }
+        </style>
+      </head>
+      <body>
+        ${html}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = function() {
+      printWindow.print();
+    };
+  }
+
+  _nodeToHTML(node) {
+    let html = `
+      <div class="node">
+        <div class="node-content">
+          <div class="node-text" style="font-family:${node.font || 'inherit'}; font-size:${node.fontSize || '13px'}">${node.text || ''}</div>
+        </div>
+        <div class="children-container">
+    `;
+    if (node.children && node.children.length) {
+      node.children.forEach(child => {
+        html += this._nodeToHTML(child);
+      });
+    }
+    html += `</div></div>`;
+    return html;
+  }
+  // ====================================
 
   render() { this.renderTabs(); this.renderTree(); }
 
@@ -1035,36 +960,6 @@ class TreeApp {
       textDiv.innerHTML = node.text || '';
       textDiv.onblur = (e) => this.updateText(node.id, e.target.innerHTML);
 
-      textDiv.addEventListener('dragover', (e) => e.preventDefault());
-      textDiv.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files[0];
-        if (file?.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            const img = `<img src="${ev.target.result}" style="width:300px;display:block;margin:10px auto;border-radius:8px;" />`;
-            textDiv.innerHTML += '\n' + img;
-            this.updateText(node.id, textDiv.innerHTML);
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-
-      // ✅ افزودن دکمه ⚙️ روی هر تصویر
-      const imgs = textDiv.querySelectorAll('img');
-      imgs.forEach((img, index) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'img-ctrl-btn';
-        btn.textContent = '⚙️';
-        btn.title = 'تنظیمات همان تصویر';
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          this.openImageSettings(node.id, index);
-        };
-        img.insertAdjacentElement('afterend', btn);
-      });
-
       left.appendChild(toggle);
       left.appendChild(textDiv);
 
@@ -1125,8 +1020,9 @@ class TreeApp {
         fontSelect.appendChild(opt);
       });
       fontSelect.onchange = (e) => {
-        textDiv.style.fontFamily = e.target.value;
-        this.updateFont(node.id, e.target.value);
+        const newFont = e.target.value;
+        textDiv.style.fontFamily = newFont;
+        this.updateFont(node.id, newFont);
       };
       actions.appendChild(fontSelect);
 
@@ -1144,14 +1040,13 @@ class TreeApp {
 
       const btns = [
         { label: '➕', cls: 'primary', action: () => this.addNode(node.id) },
-        { label: '📄', cls: '', action: () => this.prepareFile(node.id, 'file') },
-        { label: '🖼️', cls: '', action: () => this.prepareFile(node.id, 'image') },
-        { label: '⚙️', cls: 'warning', action: () => this.openImageSettings(node.id) }, // اگر index تعیین نشود: آخرین عکس
+        { label: '📄', cls: '', action: () => this.prepareFile(node.id) },
         { label: '📋', cls: 'success', action: () => {
           const text = textDiv.innerText || '';
           navigator.clipboard.writeText(text).then(() => alert('📋 کپی شد'));
         }},
-        { label: '🗑️', cls: 'danger', action: () => this.deleteNode(node.id) }
+        { label: '🗑️', cls: 'danger', action: () => this.deleteNode(node.id) },
+        { label: '🖨️', cls: 'warning', action: () => this.printNode(node.id) }
       ];
 
       btns.forEach(b => {
@@ -1181,7 +1076,7 @@ class TreeApp {
 
 const app = new TreeApp();
 
-// ===== PWA: (همان‌طور که قبلاً داشتی) سرویس ورکر ساده =====
+// ===== PWA: سرویس ورکر ساده =====
 if ('serviceWorker' in navigator) {
   const swScript = `
     const CACHE = 'tree-v1';
@@ -1207,8 +1102,6 @@ if ('serviceWorker' in navigator) {
     .then(() => console.log('✅ PWA فعال شد - برنامه قابل نصب روی گوشی'))
     .catch(err => console.log('❌ PWA فعال نشد:', err));
 }
-
-// ===== (اختیاری) ثبت دوم سرویس ورکر را اگر لازم نداری حذف کن =====
 </script>
 </body>
 </html>
